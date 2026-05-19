@@ -2,12 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { getCurrentAdmin } from "@/lib/auth";
+import { rateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
   // ---- 1. ตรวจสิทธิ์ ----
   const session = await getCurrentAdmin();
   if (!session?.adminId) {
     return NextResponse.json({ error: "ไม่ได้รับอนุญาต" }, { status: 401 });
+  }
+
+  // ---- rate limit: 5 ครั้ง/15min ต่อ admin id (ป้องกัน probe current password) ----
+  const limit = rateLimit(`change-pw:${session.adminId}`, 5, 15 * 60_000);
+  if (!limit.allowed) {
+    const secs = Math.ceil(limit.resetMs / 1000);
+    return NextResponse.json(
+      { error: `พยายามเปลี่ยนรหัสบ่อยเกินไป กรุณารอ ${secs} วินาที` },
+      { status: 429 }
+    );
   }
 
   // ---- 2. รับ + validate input ----

@@ -2,10 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { createUserToken, authCookieOptions } from "@/lib/auth";
+import { rateLimit, getClientIP } from "@/lib/rateLimit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest) {
+  // ---- rate limit: 5 register / hour ต่อ IP ----
+  const ip = getClientIP(req);
+  const limit = rateLimit(`register:ip:${ip}`, 5, 60 * 60_000);
+  if (!limit.allowed) {
+    const mins = Math.ceil(limit.resetMs / 60_000);
+    return NextResponse.json(
+      { error: `สมัครสมาชิกบ่อยเกินไป กรุณารอ ${mins} นาที` },
+      { status: 429 }
+    );
+  }
+
   const body = await req.json();
   const { name, email, password, phone } = body ?? {};
 

@@ -2,11 +2,32 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { createUserToken, authCookieOptions } from "@/lib/auth";
+import { rateLimit, getClientIP } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
+  // ---- rate limit ----
+  const ip = getClientIP(req);
+  const ipLimit = rateLimit(`login:ip:${ip}`, 20, 15 * 60_000);
+  if (!ipLimit.allowed) {
+    const secs = Math.ceil(ipLimit.resetMs / 1000);
+    return NextResponse.json(
+      { error: `พยายามเข้าระบบบ่อยเกินไป กรุณารอ ${secs} วินาที` },
+      { status: 429, headers: { "Retry-After": String(secs) } }
+    );
+  }
+
   const { email, password } = await req.json();
   if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
     return NextResponse.json({ error: "กรุณากรอกข้อมูลให้ครบ" }, { status: 400 });
+  }
+
+  const userLimit = rateLimit(`login:email:${email.toLowerCase()}`, 8, 15 * 60_000);
+  if (!userLimit.allowed) {
+    const secs = Math.ceil(userLimit.resetMs / 1000);
+    return NextResponse.json(
+      { error: `บัญชีนี้ถูกล็อกชั่วคราว กรุณารอ ${secs} วินาที` },
+      { status: 429, headers: { "Retry-After": String(secs) } }
+    );
   }
 
   const user = await prisma.user.findUnique({ where: { email } });

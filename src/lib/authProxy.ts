@@ -1,13 +1,16 @@
-// Minimal auth for proxy.ts — no next/headers imports (not allowed in proxy context)
+// Minimal auth helper สำหรับ proxy.ts — ห้าม import next/headers หรือ prisma
+// (proxy ทำงานบน Edge runtime ไม่รองรับ Node API)
 import { jwtVerify } from "jose";
 
-const ADMIN_JWT_SECRET = new TextEncoder().encode(
-  process.env.ADMIN_JWT_SECRET || "iconhome-admin-secret-key-2024-very-long"
-);
-
 export async function verifyAdminTokenProxy(token: string) {
+  const secret = process.env.ADMIN_JWT_SECRET;
+  if (!secret || secret.length < 32) {
+    // ถ้า env หาย: refuse (อย่า return ค่าจริงโดยใช้ fallback hardcode)
+    console.error("ADMIN_JWT_SECRET missing or too short in proxy");
+    return null;
+  }
   try {
-    const { payload } = await jwtVerify(token, ADMIN_JWT_SECRET);
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(secret));
     return payload as { adminId: number };
   } catch {
     return null;
