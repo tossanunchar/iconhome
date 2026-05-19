@@ -45,3 +45,5 @@ prisma/*.db
 prisma/*.db-journal
 dev.log
 /public/uploads
+
+.vercel

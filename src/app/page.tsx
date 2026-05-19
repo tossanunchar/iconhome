@@ -1,50 +1,208 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import ProductCard from "@/components/ProductCard";
 import HeroBanner from "@/components/HeroBanner";
 import prisma from "@/lib/db";
 
-const categories = [
-  { name: "เครื่องปรับอากาศ", slug: "air-conditioner", bg: "bg-blue-50", color: "#3B82F6",
-    svg: <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9"><rect x="4" y="12" width="40" height="16" rx="4" fill="#DBEAFE"/><rect x="4" y="12" width="40" height="16" rx="4" stroke="#3B82F6" strokeWidth="2"/><line x1="4" y1="20" x2="44" y2="20" stroke="#3B82F6" strokeWidth="1.5" strokeDasharray="3 3"/><circle cx="36" cy="16" r="2.5" fill="#3B82F6"/><path d="M12 30 Q14 36 16 30" stroke="#3B82F6" strokeWidth="1.5" fill="none"/><path d="M20 30 Q22 36 24 30" stroke="#3B82F6" strokeWidth="1.5" fill="none"/><path d="M28 30 Q30 36 32 30" stroke="#3B82F6" strokeWidth="1.5" fill="none"/></svg>
+// ---------- ไอคอน + สีพื้นหลัง map จาก category.slug ----------
+// (slug ตรงกับ CATEGORY_MAP ใน prisma/import-products.ts)
+const CATEGORY_THEME: Record<string, { bg: string; svg: ReactNode }> = {
+  construction: {
+    bg: "bg-orange-50",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9">
+        <rect x="4" y="28" width="40" height="8" rx="2" fill="#FED7AA"/>
+        <rect x="4" y="28" width="40" height="8" rx="2" stroke="#F97316" strokeWidth="2"/>
+        <rect x="4" y="19" width="40" height="9" rx="1" fill="#FFEDD5" stroke="#F97316" strokeWidth="2"/>
+        <rect x="4" y="10" width="40" height="9" rx="1" fill="#FFF7ED" stroke="#F97316" strokeWidth="2"/>
+        <line x1="14" y1="10" x2="14" y2="36" stroke="#F97316" strokeWidth="1.5"/>
+        <line x1="24" y1="10" x2="24" y2="36" stroke="#F97316" strokeWidth="1.5"/>
+        <line x1="34" y1="10" x2="34" y2="36" stroke="#F97316" strokeWidth="1.5"/>
+      </svg>
+    ),
   },
-  { name: "เครื่องซักผ้า", slug: "washing-machine", bg: "bg-cyan-50", color: "#06B6D4",
-    svg: <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9"><rect x="6" y="4" width="36" height="40" rx="4" fill="#CFFAFE"/><rect x="6" y="4" width="36" height="40" rx="4" stroke="#06B6D4" strokeWidth="2"/><circle cx="24" cy="27" r="11" stroke="#06B6D4" strokeWidth="2"/><circle cx="24" cy="27" r="5" fill="#CFFAFE" stroke="#06B6D4" strokeWidth="1.5"/><rect x="10" y="10" width="5" height="3" rx="1" fill="#06B6D4"/><circle cx="32" cy="11.5" r="2" fill="#06B6D4"/></svg>
+  "door-window": {
+    bg: "bg-amber-50",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9">
+        <rect x="10" y="6" width="28" height="38" rx="1" fill="#FEF3C7"/>
+        <rect x="10" y="6" width="28" height="38" rx="1" stroke="#D97706" strokeWidth="2"/>
+        <rect x="14" y="10" width="20" height="30" rx="1" fill="#FFFBEB" stroke="#D97706" strokeWidth="1.5"/>
+        <line x1="24" y1="10" x2="24" y2="40" stroke="#D97706" strokeWidth="1.5"/>
+        <line x1="14" y1="25" x2="34" y2="25" stroke="#D97706" strokeWidth="1.5"/>
+        <circle cx="30" cy="24" r="1.5" fill="#D97706"/>
+      </svg>
+    ),
   },
-  { name: "ตู้เย็น", slug: "refrigerator", bg: "bg-sky-50", color: "#0EA5E9",
-    svg: <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9"><rect x="10" y="4" width="28" height="40" rx="3" fill="#E0F2FE"/><rect x="10" y="4" width="28" height="40" rx="3" stroke="#0EA5E9" strokeWidth="2"/><line x1="10" y1="22" x2="38" y2="22" stroke="#0EA5E9" strokeWidth="2"/><line x1="19" y1="12" x2="19" y2="19" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round"/><line x1="19" y1="28" x2="19" y2="36" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round"/></svg>
+  tools: {
+    bg: "bg-yellow-50",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9">
+        <path d="M32 6 L42 16 L26 32 L16 22 Z" fill="#FEF3C7" stroke="#CA8A04" strokeWidth="2" strokeLinejoin="round"/>
+        <rect x="3" y="32" width="16" height="6" rx="1" transform="rotate(-45 3 32)" fill="#FDE68A" stroke="#CA8A04" strokeWidth="2"/>
+        <circle cx="36" cy="12" r="2" fill="#CA8A04"/>
+      </svg>
+    ),
   },
-  { name: "โทรทัศน์", slug: "tv", bg: "bg-purple-50", color: "#8B5CF6",
-    svg: <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9"><rect x="4" y="8" width="40" height="26" rx="3" fill="#EDE9FE"/><rect x="4" y="8" width="40" height="26" rx="3" stroke="#8B5CF6" strokeWidth="2"/><rect x="8" y="12" width="32" height="18" rx="1" fill="#EDE9FE" stroke="#8B5CF6" strokeWidth="1"/><line x1="16" y1="38" x2="32" y2="38" stroke="#8B5CF6" strokeWidth="2" strokeLinecap="round"/><line x1="24" y1="34" x2="24" y2="38" stroke="#8B5CF6" strokeWidth="2"/></svg>
+  electrical: {
+    bg: "bg-yellow-50",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9">
+        <path d="M26 4 L12 26 L22 26 L18 44 L36 22 L26 22 Z" fill="#FDE68A" stroke="#CA8A04" strokeWidth="2" strokeLinejoin="round"/>
+      </svg>
+    ),
   },
-  { name: "วัสดุก่อสร้าง", slug: "construction", bg: "bg-orange-50", color: "#F97316",
-    svg: <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9"><rect x="4" y="28" width="40" height="8" rx="2" fill="#FED7AA"/><rect x="4" y="28" width="40" height="8" rx="2" stroke="#F97316" strokeWidth="2"/><rect x="4" y="19" width="40" height="9" rx="1" fill="#FFEDD5" stroke="#F97316" strokeWidth="2"/><rect x="4" y="10" width="40" height="9" rx="1" fill="#FFF7ED" stroke="#F97316" strokeWidth="2"/><line x1="14" y1="10" x2="14" y2="36" stroke="#F97316" strokeWidth="1.5"/><line x1="24" y1="10" x2="24" y2="36" stroke="#F97316" strokeWidth="1.5"/><line x1="34" y1="10" x2="34" y2="36" stroke="#F97316" strokeWidth="1.5"/></svg>
+  "tile-sanitary": {
+    bg: "bg-teal-50",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9">
+        <rect x="4" y="4" width="18" height="18" rx="2" fill="#CCFBF1"/>
+        <rect x="4" y="4" width="18" height="18" rx="2" stroke="#14B8A6" strokeWidth="2"/>
+        <rect x="26" y="4" width="18" height="18" rx="2" fill="#CCFBF1" opacity="0.7"/>
+        <rect x="26" y="4" width="18" height="18" rx="2" stroke="#14B8A6" strokeWidth="2"/>
+        <rect x="4" y="26" width="18" height="18" rx="2" fill="#CCFBF1" opacity="0.7"/>
+        <rect x="4" y="26" width="18" height="18" rx="2" stroke="#14B8A6" strokeWidth="2"/>
+        <rect x="26" y="26" width="18" height="18" rx="2" fill="#CCFBF1"/>
+        <rect x="26" y="26" width="18" height="18" rx="2" stroke="#14B8A6" strokeWidth="2"/>
+      </svg>
+    ),
   },
-  { name: "กระเบื้อง", slug: "tile", bg: "bg-amber-50", color: "#F59E0B",
-    svg: <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9"><rect x="4" y="4" width="18" height="18" rx="2" fill="#FDE68A"/><rect x="4" y="4" width="18" height="18" rx="2" stroke="#F59E0B" strokeWidth="2"/><rect x="26" y="4" width="18" height="18" rx="2" fill="#FDE68A" opacity="0.7"/><rect x="26" y="4" width="18" height="18" rx="2" stroke="#F59E0B" strokeWidth="2"/><rect x="4" y="26" width="18" height="18" rx="2" fill="#FDE68A" opacity="0.7"/><rect x="4" y="26" width="18" height="18" rx="2" stroke="#F59E0B" strokeWidth="2"/><rect x="26" y="26" width="18" height="18" rx="2" fill="#FDE68A"/><rect x="26" y="26" width="18" height="18" rx="2" stroke="#F59E0B" strokeWidth="2"/></svg>
+  paint: {
+    bg: "bg-pink-50",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9">
+        <rect x="10" y="14" width="22" height="28" rx="2" fill="#FCE7F3" stroke="#EC4899" strokeWidth="2"/>
+        <rect x="14" y="8" width="14" height="8" rx="1" fill="#FBCFE8" stroke="#EC4899" strokeWidth="2"/>
+        <path d="M32 20 Q40 20 40 26 Q40 32 32 32" stroke="#EC4899" strokeWidth="2" fill="none"/>
+        <line x1="14" y1="22" x2="28" y2="22" stroke="#EC4899" strokeWidth="1.5"/>
+        <line x1="14" y1="28" x2="28" y2="28" stroke="#EC4899" strokeWidth="1.5"/>
+      </svg>
+    ),
   },
-  { name: "สุขภัณฑ์", slug: "sanitary", bg: "bg-teal-50", color: "#14B8A6",
-    svg: <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9"><ellipse cx="24" cy="32" rx="16" ry="10" fill="#CCFBF1"/><ellipse cx="24" cy="32" rx="16" ry="10" stroke="#14B8A6" strokeWidth="2"/><path d="M14 32 Q16 22 24 20 Q32 22 34 32" fill="#CCFBF1" stroke="#14B8A6" strokeWidth="2"/><rect x="20" y="8" width="8" height="12" rx="2" fill="#CCFBF1" stroke="#14B8A6" strokeWidth="2"/></svg>
+  plumbing: {
+    bg: "bg-sky-50",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9">
+        <path d="M24 4 C16 16 12 22 12 30 a12 12 0 1 0 24 0 c0 -8 -4 -14 -12 -26 Z" fill="#E0F2FE" stroke="#0EA5E9" strokeWidth="2" strokeLinejoin="round"/>
+        <path d="M19 30 a5 5 0 0 0 10 0" stroke="#0EA5E9" strokeWidth="1.5" fill="none"/>
+      </svg>
+    ),
   },
-  { name: "เหล็กเส้น", slug: "steel", bg: "bg-gray-100", color: "#6B7280",
-    svg: <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9"><rect x="6" y="20" width="36" height="5" rx="2" fill="#E5E7EB"/><rect x="6" y="20" width="36" height="5" rx="2" stroke="#6B7280" strokeWidth="2"/><rect x="6" y="28" width="36" height="5" rx="2" fill="#E5E7EB"/><rect x="6" y="28" width="36" height="5" rx="2" stroke="#6B7280" strokeWidth="2"/><rect x="6" y="12" width="36" height="5" rx="2" fill="#E5E7EB"/><rect x="6" y="12" width="36" height="5" rx="2" stroke="#6B7280" strokeWidth="2"/></svg>
+  furniture: {
+    bg: "bg-amber-50",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9">
+        <rect x="6" y="22" width="36" height="14" rx="3" fill="#FEF3C7" stroke="#D97706" strokeWidth="2"/>
+        <rect x="6" y="14" width="36" height="10" rx="2" fill="#FDE68A" stroke="#D97706" strokeWidth="2"/>
+        <line x1="10" y1="36" x2="10" y2="42" stroke="#D97706" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="38" y1="36" x2="38" y2="42" stroke="#D97706" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="6" y1="28" x2="42" y2="28" stroke="#D97706" strokeWidth="1.5"/>
+      </svg>
+    ),
   },
+  appliance: {
+    bg: "bg-cyan-50",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9">
+        <rect x="6" y="4" width="36" height="40" rx="4" fill="#CFFAFE" stroke="#06B6D4" strokeWidth="2"/>
+        <circle cx="24" cy="27" r="11" stroke="#06B6D4" strokeWidth="2"/>
+        <circle cx="24" cy="27" r="5" fill="#CFFAFE" stroke="#06B6D4" strokeWidth="1.5"/>
+        <rect x="10" y="10" width="5" height="3" rx="1" fill="#06B6D4"/>
+        <circle cx="32" cy="11.5" r="2" fill="#06B6D4"/>
+      </svg>
+    ),
+  },
+  household: {
+    bg: "bg-red-50",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9">
+        <path d="M6 22 L24 6 L42 22 V40 a2 2 0 0 1 -2 2 H8 a2 2 0 0 1 -2 -2 Z" fill="#FEE2E2" stroke="#EF4444" strokeWidth="2" strokeLinejoin="round"/>
+        <rect x="20" y="26" width="8" height="16" fill="#FECACA" stroke="#EF4444" strokeWidth="1.5"/>
+      </svg>
+    ),
+  },
+  foam: {
+    bg: "bg-indigo-50",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9">
+        <rect x="6" y="14" width="36" height="22" rx="3" fill="#E0E7FF" stroke="#6366F1" strokeWidth="2"/>
+        <circle cx="14" cy="22" r="3" fill="#C7D2FE" stroke="#6366F1" strokeWidth="1.5"/>
+        <circle cx="24" cy="28" r="3" fill="#C7D2FE" stroke="#6366F1" strokeWidth="1.5"/>
+        <circle cx="34" cy="22" r="3" fill="#C7D2FE" stroke="#6366F1" strokeWidth="1.5"/>
+        <circle cx="18" cy="30" r="2" fill="#C7D2FE" stroke="#6366F1" strokeWidth="1.5"/>
+        <circle cx="30" cy="30" r="2" fill="#C7D2FE" stroke="#6366F1" strokeWidth="1.5"/>
+      </svg>
+    ),
+  },
+  services: {
+    bg: "bg-purple-50",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9">
+        <circle cx="24" cy="24" r="18" fill="#EDE9FE" stroke="#8B5CF6" strokeWidth="2"/>
+        <path d="M24 14 v10 l7 4" stroke="#8B5CF6" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+      </svg>
+    ),
+  },
+  office: {
+    bg: "bg-blue-50",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9">
+        <rect x="10" y="6" width="24" height="36" rx="2" fill="#DBEAFE" stroke="#3B82F6" strokeWidth="2"/>
+        <rect x="16" y="2" width="12" height="6" rx="1" fill="#3B82F6"/>
+        <line x1="14" y1="16" x2="30" y2="16" stroke="#3B82F6" strokeWidth="1.5"/>
+        <line x1="14" y1="22" x2="30" y2="22" stroke="#3B82F6" strokeWidth="1.5"/>
+        <line x1="14" y1="28" x2="24" y2="28" stroke="#3B82F6" strokeWidth="1.5"/>
+      </svg>
+    ),
+  },
+  solar: {
+    bg: "bg-green-50",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9">
+        <rect x="6" y="10" width="36" height="22" rx="2" fill="#D1FAE5" stroke="#10B981" strokeWidth="2"/>
+        <line x1="6" y1="21" x2="42" y2="21" stroke="#10B981" strokeWidth="1.5"/>
+        <line x1="18" y1="10" x2="18" y2="32" stroke="#10B981" strokeWidth="1.5"/>
+        <line x1="30" y1="10" x2="30" y2="32" stroke="#10B981" strokeWidth="1.5"/>
+        <circle cx="24" cy="40" r="3" fill="#FDE047" stroke="#EAB308" strokeWidth="1.5"/>
+        <line x1="24" y1="32" x2="24" y2="36" stroke="#EAB308" strokeWidth="1.5"/>
+      </svg>
+    ),
+  },
+};
+
+const DEFAULT_THEME = {
+  bg: "bg-gray-100",
+  svg: (
+    <svg viewBox="0 0 48 48" fill="none" className="w-9 h-9">
+      <rect x="6" y="6" width="36" height="36" rx="6" fill="#F3F4F6" stroke="#9CA3AF" strokeWidth="2"/>
+      <circle cx="24" cy="20" r="6" fill="#E5E7EB" stroke="#6B7280" strokeWidth="1.5"/>
+      <rect x="14" y="28" width="20" height="10" rx="2" fill="#E5E7EB" stroke="#6B7280" strokeWidth="1.5"/>
+    </svg>
+  ),
+};
+
+// ---------- โทนสีตัวอักษรของแบรนด์ (วนใช้ตามลำดับ) ----------
+const BRAND_COLORS = [
+  "text-red-600",
+  "text-blue-800",
+  "text-emerald-700",
+  "text-orange-700",
+  "text-purple-700",
+  "text-cyan-700",
+  "text-amber-700",
+  "text-gray-800",
 ];
 
-const brands = [
-  { name: "LG", textColor: "text-red-600" },
-  { name: "Samsung", textColor: "text-blue-800" },
-  { name: "Mitsubishi", textColor: "text-red-700" },
-  { name: "Daikin", textColor: "text-blue-700" },
-  { name: "Hitachi", textColor: "text-red-800" },
-  { name: "Panasonic", textColor: "text-blue-900" },
-  { name: "Carrier", textColor: "text-blue-700" },
-  { name: "Toshiba", textColor: "text-red-600" },
-];
-
-async function getHomeProducts() {
-  const [newProducts, saleProducts] = await Promise.all([
+async function getHomeData() {
+  const [
+    newProducts,
+    saleProducts,
+    categories,
+    brandRows,
+    productCount,
+  ] = await Promise.all([
     prisma.product.findMany({
       where: { badge: "NEW" },
       orderBy: { createdAt: "desc" },
@@ -55,16 +213,59 @@ async function getHomeProducts() {
       orderBy: { createdAt: "desc" },
       take: 4,
     }),
+    prisma.category.findMany({
+      orderBy: { name: "asc" },
+    }),
+    // top 8 แบรนด์ตามจำนวนสินค้า
+    prisma.$queryRaw<Array<{ brand: string; cnt: bigint }>>`
+      SELECT brand, COUNT(*) AS cnt
+      FROM "Product"
+      WHERE brand IS NOT NULL
+      GROUP BY brand
+      ORDER BY cnt DESC
+      LIMIT 8
+    `,
+    prisma.product.count(),
   ]);
-  return { newProducts, saleProducts };
+
+  // ถ้ายังไม่มีสินค้า NEW/SALE ใช้สินค้าล่าสุด/ราคาต่ำสุดแทนเพื่อไม่ให้หน้าว่าง
+  let displayNew = newProducts;
+  let displaySale = saleProducts;
+  if (displayNew.length === 0) {
+    displayNew = await prisma.product.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 4,
+    });
+  }
+  if (displaySale.length === 0) {
+    displaySale = await prisma.product.findMany({
+      where: { price: { gt: 0 } },
+      orderBy: { price: "asc" },
+      take: 4,
+    });
+  }
+
+  return {
+    newProducts: displayNew,
+    saleProducts: displaySale,
+    categories,
+    brands: brandRows.map((b) => b.brand),
+    productCount,
+  };
 }
 
 function parseImages(raw: string): string[] {
   try { return JSON.parse(raw); } catch { return []; }
 }
 
+function formatStat(n: number): string {
+  if (n >= 1000) return `${Math.floor(n / 1000)}K+`;
+  if (n >= 100) return `${Math.floor(n / 100) * 100}+`;
+  return `${n}`;
+}
+
 export default async function HomePage() {
-  const { newProducts, saleProducts } = await getHomeProducts();
+  const { newProducts, saleProducts, categories, brands, productCount } = await getHomeData();
 
   return (
     <div>
@@ -80,7 +281,7 @@ export default async function HomePage() {
             style={{ background: "linear-gradient(180deg, #FFD600 0%, #FFC300 100%)" }}>
             <div className="text-center px-3">
               <p className="text-red-700 font-black text-sm leading-tight">สินค้าโครงสร้าง</p>
-              <p className="text-red-800 font-bold text-xs mt-1">วันนี้ - 30 มิ.ย. 67</p>
+              <p className="text-red-800 font-bold text-xs mt-1">วันนี้ - 30 มิ.ย. 69</p>
               <div className="mt-3 border-t-2 border-red-600/30 pt-2">
                 <p className="text-red-700 font-black text-2xl leading-none">สรีไท</p>
                 <p className="text-red-600 text-xs font-semibold">ทุกรุ่น ทุกขนาด</p>
@@ -92,7 +293,7 @@ export default async function HomePage() {
               <div className="text-white">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="bg-yellow-400 text-red-800 text-xs font-black px-2.5 py-0.5 rounded uppercase tracking-wide">โปรโมชั่น</span>
-                  <span className="text-white/80 text-sm">วันนี้ - 30 มิ.ย. 67</span>
+                  <span className="text-white/80 text-sm">วันนี้ - 30 มิ.ย. 69</span>
                 </div>
                 <div className="text-6xl font-black leading-none mb-1" style={{ textShadow: "3px 3px 0 rgba(0,0,0,0.2)" }}>
                   ทุบราคา
@@ -129,7 +330,7 @@ export default async function HomePage() {
         </section>
       } />
 
-      {/* Category section */}
+      {/* Category section — มาจากฐานข้อมูลจริง */}
       <section className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
@@ -143,42 +344,49 @@ export default async function HomePage() {
             </svg>
           </Link>
         </div>
-        <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
-          {categories.map((cat) => (
-            <Link key={cat.name} href={`/category?category=${cat.slug}`}
-              className={`flex flex-col items-center gap-2 py-4 px-2 ${cat.bg} rounded-lg hover:shadow-sm transition-all group text-center border border-transparent hover:border-gray-200`}
-            >
-              <div className="w-11 h-11 flex items-center justify-center">
-                {cat.svg}
-              </div>
-              <span className="text-xs font-medium text-gray-700 group-hover:text-red-600 transition-colors leading-tight">{cat.name}</span>
-            </Link>
-          ))}
+        <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
+          {categories.map((cat) => {
+            const theme = CATEGORY_THEME[cat.slug] ?? DEFAULT_THEME;
+            return (
+              <Link key={cat.id} href={`/category?category=${cat.slug}`}
+                className={`flex flex-col items-center gap-2 py-4 px-2 ${theme.bg} rounded-lg hover:shadow-sm transition-all group text-center border border-transparent hover:border-gray-200`}
+              >
+                <div className="w-11 h-11 flex items-center justify-center">
+                  {theme.svg}
+                </div>
+                <span className="text-xs font-medium text-gray-700 group-hover:text-red-600 transition-colors leading-tight">{cat.name}</span>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
-      {/* Brand section */}
-      <section className="border-t border-b border-gray-100 bg-gray-50 py-5">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-              <span className="w-1 h-5 bg-red-600 rounded-full inline-block"></span>
-              สินค้าตามแบรนด์
-            </h2>
+      {/* Brand section — top 8 แบรนด์ที่มีสินค้ามากที่สุด */}
+      {brands.length > 0 && (
+        <section className="border-t border-b border-gray-100 bg-gray-50 py-5">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <span className="w-1 h-5 bg-red-600 rounded-full inline-block"></span>
+                สินค้าตามแบรนด์
+              </h2>
+            </div>
+            <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
+              {brands.map((brand, i) => (
+                <Link key={brand} href={`/category?brand=${encodeURIComponent(brand)}`}
+                  className="bg-white rounded border border-gray-200 px-3 py-4 flex flex-col items-center gap-2 hover:border-red-300 hover:shadow-sm transition-all group"
+                >
+                  <div className="w-full h-8 flex items-center justify-center">
+                    <span className={`text-sm font-black ${BRAND_COLORS[i % BRAND_COLORS.length]} truncate text-center`} title={brand}>
+                      {brand}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
-            {brands.map((brand) => (
-              <Link key={brand.name} href={`/category?brand=${encodeURIComponent(brand.name)}`}
-                className="bg-white rounded border border-gray-200 px-3 py-4 flex flex-col items-center gap-2 hover:border-red-300 hover:shadow-sm transition-all group"
-              >
-                <div className="w-12 h-8 flex items-center justify-center">
-                  <span className={`text-lg font-black ${brand.textColor}`}>{brand.name}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* New products */}
       <section className="max-w-7xl mx-auto px-4 py-6">
@@ -188,7 +396,7 @@ export default async function HomePage() {
             <h2 className="text-lg font-bold text-gray-800">สินค้ามาใหม่</h2>
             <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded">NEW</span>
           </div>
-          <Link href="/category?badge=NEW" className="text-sm text-red-600 hover:text-red-700 font-medium flex items-center gap-0.5">
+          <Link href="/category?sort=newest" className="text-sm text-red-600 hover:text-red-700 font-medium flex items-center gap-0.5">
             ดูทั้งหมด
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
@@ -225,7 +433,7 @@ export default async function HomePage() {
               <h2 className="text-lg font-bold text-gray-800">โปรโมชั่นทุกราคา</h2>
               <span className="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded">HOT</span>
             </div>
-            <Link href="/category?badge=SALE" className="text-sm text-red-600 hover:text-red-700 font-medium flex items-center gap-0.5">
+            <Link href="/category?sort=price-asc" className="text-sm text-red-600 hover:text-red-700 font-medium flex items-center gap-0.5">
               ดูทั้งหมด
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
@@ -270,7 +478,7 @@ export default async function HomePage() {
             <div className="grid grid-cols-3 gap-6 text-center flex-shrink-0">
               {[
                 { number: "10+", label: "ปีประสบการณ์" },
-                { number: "500+", label: "รายการสินค้า" },
+                { number: formatStat(productCount), label: "รายการสินค้า" },
                 { number: "2", label: "สาขา" },
               ].map((stat) => (
                 <div key={stat.label}>
