@@ -1,24 +1,43 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "iconhome-secret-key-2024-very-long-string"
-);
-const ADMIN_JWT_SECRET = new TextEncoder().encode(
-  process.env.ADMIN_JWT_SECRET || "iconhome-admin-secret-key-2024-very-long"
-);
+// ---- บังคับให้ตั้ง env: ไม่มี fallback hardcode (ป้องกัน JWT forgery ถ้า env หาย) ----
+function requireSecret(name: string): Uint8Array {
+  const v = process.env[name];
+  if (!v || v.length < 32) {
+    // ถ้า build ตอน prerender ก็จะ throw — เราอยาก fail loud
+    throw new Error(`Missing or weak ${name} (need at least 32 chars). Set it in environment.`);
+  }
+  return new TextEncoder().encode(v);
+}
 
-// Customer auth
+// lazy: เรียกใช้ตอน function เรียก ไม่ใช่ตอน import — กัน build ตอนไม่มี env
+function userSecret() { return requireSecret("JWT_SECRET"); }
+function adminSecret() { return requireSecret("ADMIN_JWT_SECRET"); }
+
+// ---- Cookie option helper: secure ใน production, lax+httpOnly เสมอ ----
+export function authCookieOptions(maxAgeSeconds: number) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    maxAge: maxAgeSeconds,
+    path: "/",
+  };
+}
+
+// ---- Customer auth ----
 export async function createUserToken(userId: number) {
   return await new SignJWT({ userId })
     .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(JWT_SECRET);
+    .sign(userSecret());
 }
 
 export async function verifyUserToken(token: string) {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, userSecret());
     return payload as { userId: number };
   } catch {
     return null;
@@ -32,17 +51,18 @@ export async function getCurrentUser() {
   return verifyUserToken(token);
 }
 
-// Admin auth
+// ---- Admin auth ----
 export async function createAdminToken(adminId: number) {
   return await new SignJWT({ adminId })
     .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
     .setExpirationTime("8h")
-    .sign(ADMIN_JWT_SECRET);
+    .sign(adminSecret());
 }
 
 export async function verifyAdminToken(token: string) {
   try {
-    const { payload } = await jwtVerify(token, ADMIN_JWT_SECRET);
+    const { payload } = await jwtVerify(token, adminSecret());
     return payload as { adminId: number };
   } catch {
     return null;

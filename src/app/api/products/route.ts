@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { getCurrentAdmin } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -10,7 +11,7 @@ export async function GET(req: NextRequest) {
   const minPrice = searchParams.get("minPrice");
   const maxPrice = searchParams.get("maxPrice");
   const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "12");
+  const limit = Math.min(parseInt(searchParams.get("limit") || "12"), 100);
   const sort = searchParams.get("sort") || "newest";
 
   const slug = searchParams.get("slug") || "";
@@ -66,7 +67,26 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  // ---- ตรวจสิทธิ์ admin ----
+  const session = await getCurrentAdmin();
+  if (!session?.adminId) {
+    return NextResponse.json({ error: "ไม่ได้รับอนุญาต" }, { status: 401 });
+  }
+
   const body = await req.json();
+
+  if (!body.name || typeof body.name !== "string") {
+    return NextResponse.json({ error: "กรุณากรอกชื่อสินค้า" }, { status: 400 });
+  }
+  const price = parseFloat(body.price);
+  if (!Number.isFinite(price) || price < 0) {
+    return NextResponse.json({ error: "ราคาไม่ถูกต้อง" }, { status: 400 });
+  }
+  const originalPrice = body.originalPrice ? parseFloat(body.originalPrice) : null;
+  if (originalPrice !== null && (!Number.isFinite(originalPrice) || originalPrice < 0)) {
+    return NextResponse.json({ error: "ราคาเดิมไม่ถูกต้อง" }, { status: 400 });
+  }
+
   const slug = body.name
     .toLowerCase()
     .replace(/[^a-z0-9฀-๿]/g, "-")
@@ -77,10 +97,10 @@ export async function POST(req: NextRequest) {
       name: body.name,
       slug,
       description: body.description || "",
-      price: parseFloat(body.price),
-      originalPrice: body.originalPrice ? parseFloat(body.originalPrice) : null,
+      price,
+      originalPrice,
       stock: parseInt(body.stock) || 0,
-      images: JSON.stringify(body.images || []),
+      images: JSON.stringify(Array.isArray(body.images) ? body.images : []),
       badge: body.badge || null,
       brand: body.brand || null,
       categoryId: body.categoryId ? parseInt(body.categoryId) : null,
