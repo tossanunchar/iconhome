@@ -3,6 +3,46 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 
+// ---- Placeholder สำหรับสินค้าที่ไม่มีรูป ----
+// ใช้ hash ของชื่อสินค้าเลือกสีจาก palette → สีคงที่ไม่กระพริบ
+const PALETTE = [
+  { bg: "from-red-100 to-red-50", text: "text-red-700" },
+  { bg: "from-blue-100 to-blue-50", text: "text-blue-700" },
+  { bg: "from-green-100 to-green-50", text: "text-green-700" },
+  { bg: "from-purple-100 to-purple-50", text: "text-purple-700" },
+  { bg: "from-amber-100 to-amber-50", text: "text-amber-700" },
+  { bg: "from-cyan-100 to-cyan-50", text: "text-cyan-700" },
+  { bg: "from-pink-100 to-pink-50", text: "text-pink-700" },
+  { bg: "from-indigo-100 to-indigo-50", text: "text-indigo-700" },
+  { bg: "from-teal-100 to-teal-50", text: "text-teal-700" },
+  { bg: "from-orange-100 to-orange-50", text: "text-orange-700" },
+];
+
+function ProductPlaceholder({ name, brand, id }: { name: string; brand?: string | null; id: number }) {
+  // เลือกสีจาก hash (deterministic) เพื่อให้แต่ละสินค้ามีสีของตัวเอง
+  const idx = Math.abs(id * 2654435761) % PALETTE.length;
+  const c = PALETTE[idx];
+
+  // ใช้แบรนด์ก่อน ถ้าไม่มีค่อยใช้ตัวอักษรแรก 2 ตัวของชื่อ
+  const label = brand || name.trim().slice(0, 2);
+
+  return (
+    <div className={`w-36 h-36 rounded bg-gradient-to-br ${c.bg} ${c.text} flex flex-col items-center justify-center relative overflow-hidden`}>
+      {/* pattern พื้นหลังจางๆ */}
+      <svg className="absolute inset-0 w-full h-full opacity-10" fill="none" stroke="currentColor" viewBox="0 0 100 100">
+        <path d="M0 50 L50 0 L100 50 L50 100 Z" strokeWidth="1"/>
+        <circle cx="50" cy="50" r="30" strokeWidth="1"/>
+      </svg>
+      <svg className="w-10 h-10 mb-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
+      <span className="text-xs font-bold uppercase tracking-wide max-w-[7rem] truncate px-2 text-center">
+        {label}
+      </span>
+    </div>
+  );
+}
+
 interface ProductCardProps {
   id: number;
   name: string;
@@ -73,11 +113,7 @@ export default function ProductCard({ id, name, slug, price, originalPrice, imag
               className="w-36 h-36 object-contain"
             />
           ) : (
-            <div className="w-36 h-36 flex items-center justify-center text-gray-200">
-              <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
+            <ProductPlaceholder name={name} brand={brand} id={id} />
           )}
         </div>
       </Link>
