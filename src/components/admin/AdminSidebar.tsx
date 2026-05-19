@@ -49,7 +49,7 @@ const navItems = [
     ),
   },
   {
-    href: "/admin/settings/password",
+    href: "/admin/settings",
     label: "ตั้งค่า",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
