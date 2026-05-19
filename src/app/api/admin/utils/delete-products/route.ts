@@ -19,23 +19,72 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "ไม่ได้รับอนุญาต" }, { status: 401 });
   }
 
-  let body: { keyword?: unknown; scope?: unknown; confirm?: unknown };
+  let body: { keyword?: unknown; scope?: unknown; confirm?: unknown; ids?: unknown };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "ข้อมูลไม่ใช่ JSON" }, { status: 400 });
   }
 
+  const confirm = body.confirm === true;
+
+  // ---- mode: by ids ----
+  if (Array.isArray(body.ids) && body.ids.length > 0) {
+    const ids = body.ids
+      .map((v) => typeof v === "number" ? v : parseInt(String(v)))
+      .filter((n) => Number.isFinite(n) && n > 0);
+    if (ids.length === 0) {
+      return NextResponse.json({ error: "ids ว่างหรือไม่ถูกต้อง" }, { status: 400 });
+    }
+    if (ids.length > 1000) {
+      return NextResponse.json({ error: `เกิน 1,000 ต่อครั้ง (${ids.length})` }, { status: 400 });
+    }
+
+    const where = { id: { in: ids } };
+    if (!confirm) {
+      const [count, sample] = await Promise.all([
+        prisma.product.count({ where }),
+        prisma.product.findMany({
+          where,
+          select: { id: true, name: true, description: true, price: true, brand: true },
+          take: 10,
+        }),
+      ]);
+      return NextResponse.json({
+        mode: "preview",
+        scope: "ids",
+        count,
+        sample,
+        message: count === 0 ? "ไม่พบ id" : `พบ ${count} รายการ ส่ง confirm:true เพื่อยืนยัน`,
+      });
+    }
+    const result = await prisma.$transaction(async (tx) => {
+      const orphaned = await tx.orderItem.updateMany({
+        where: { productId: { in: ids } },
+        data: { productId: null },
+      });
+      const deleted = await tx.product.deleteMany({ where });
+      return { deleted: deleted.count, orphanedOrderItems: orphaned.count };
+    });
+    return NextResponse.json({
+      mode: "delete",
+      scope: "ids",
+      deleted: result.deleted,
+      orphanedOrderItems: result.orphanedOrderItems,
+      message: `ลบ ${result.deleted} รายการ`,
+    });
+  }
+
+  // ---- mode: by keyword ----
   const keyword = typeof body.keyword === "string" ? body.keyword.trim() : "";
   if (!keyword || keyword.length < 2) {
-    return NextResponse.json({ error: "keyword ต้องยาวอย่างน้อย 2 ตัวอักษร" }, { status: 400 });
+    return NextResponse.json({ error: "ต้องระบุ keyword (อย่างน้อย 2 ตัวอักษร) หรือ ids[]" }, { status: 400 });
   }
   if (keyword.length > 100) {
     return NextResponse.json({ error: "keyword ยาวเกินไป" }, { status: 400 });
   }
 
   const scope = body.scope === "description" ? "description" : (body.scope === "both" ? "both" : "name");
-  const confirm = body.confirm === true;
 
   // ---- สร้าง where clause ----
   const where = (() => {
