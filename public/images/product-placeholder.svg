@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#F8FAFC" rx="8"/>
+  <!-- AC unit body -->
+  <rect x="40" y="60" width="120" height="55" rx="8" fill="#E2E8F0" stroke="#CBD5E1" stroke-width="2"/>
+  <!-- Vents -->
+  <line x1="55" y1="72" x2="145" y2="72" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
+  <line x1="55" y1="80" x2="145" y2="80" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
+  <line x1="55" y1="88" x2="145" y2="88" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
+  <line x1="55" y1="96" x2="145" y2="96" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
+  <!-- Display dot -->
+  <circle cx="135" cy="78" r="4" fill="#64748B"/>
+  <!-- Outdoor unit -->
+  <rect x="65" y="120" width="70" height="45" rx="6" fill="#E2E8F0" stroke="#CBD5E1" stroke-width="2"/>
+  <circle cx="100" cy="142" r="14" fill="#CBD5E1" stroke="#94A3B8" stroke-width="2"/>
+  <circle cx="100" cy="142" r="6" fill="#94A3B8"/>
+  <!-- Pipe -->
+  <line x1="80" y1="115" x2="80" y2="120" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>
+  <line x1="120" y1="115" x2="120" y2="120" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>
+</svg>
