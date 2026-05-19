@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { verifyAdminToken } from "@/lib/auth";
-import { cookies } from "next/headers";
+import { getCurrentAdmin } from "@/lib/auth";
+import { validateBody } from "@/lib/validate";
+import { bannerSchema } from "@/lib/schemas";
 
 // Public GET — return active banners ordered by position
 export async function GET() {
@@ -14,20 +15,22 @@ export async function GET() {
 
 // Admin POST — create banner
 export async function POST(req: NextRequest) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("admin_token")?.value;
-  if (!token || !(await verifyAdminToken(token))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await getCurrentAdmin();
+  if (!session?.adminId) {
+    return NextResponse.json({ error: "ไม่ได้รับอนุญาต" }, { status: 401 });
   }
 
-  const body = await req.json();
+  const parsed = await validateBody(req, bannerSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
+
   const banner = await prisma.banner.create({
     data: {
-      title: body.title || null,
+      title: body.title ?? null,
       imageUrl: body.imageUrl,
-      linkUrl: body.linkUrl || null,
-      position: body.position ?? 0,
-      isActive: body.isActive ?? true,
+      linkUrl: body.linkUrl ?? null,
+      position: body.position,
+      isActive: body.isActive,
     },
   });
   return NextResponse.json({ banner });

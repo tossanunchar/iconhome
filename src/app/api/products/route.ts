@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth";
+import { validateBody } from "@/lib/validate";
+import { productCreateSchema } from "@/lib/schemas";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -18,7 +20,6 @@ export async function GET(req: NextRequest) {
 
   const where: any = {};
   if (slug) {
-    // Exact slug lookup
     const product = await prisma.product.findUnique({
       where: { slug },
       include: { category: true },
@@ -67,25 +68,16 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  // ---- ตรวจสิทธิ์ admin ----
+  // ---- admin-only ----
   const session = await getCurrentAdmin();
   if (!session?.adminId) {
     return NextResponse.json({ error: "ไม่ได้รับอนุญาต" }, { status: 401 });
   }
 
-  const body = await req.json();
-
-  if (!body.name || typeof body.name !== "string") {
-    return NextResponse.json({ error: "กรุณากรอกชื่อสินค้า" }, { status: 400 });
-  }
-  const price = parseFloat(body.price);
-  if (!Number.isFinite(price) || price < 0) {
-    return NextResponse.json({ error: "ราคาไม่ถูกต้อง" }, { status: 400 });
-  }
-  const originalPrice = body.originalPrice ? parseFloat(body.originalPrice) : null;
-  if (originalPrice !== null && (!Number.isFinite(originalPrice) || originalPrice < 0)) {
-    return NextResponse.json({ error: "ราคาเดิมไม่ถูกต้อง" }, { status: 400 });
-  }
+  // ---- Zod validation ----
+  const parsed = await validateBody(req, productCreateSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   const slug = body.name
     .toLowerCase()
@@ -97,13 +89,13 @@ export async function POST(req: NextRequest) {
       name: body.name,
       slug,
       description: body.description || "",
-      price,
-      originalPrice,
-      stock: parseInt(body.stock) || 0,
-      images: JSON.stringify(Array.isArray(body.images) ? body.images : []),
-      badge: body.badge || null,
-      brand: body.brand || null,
-      categoryId: body.categoryId ? parseInt(body.categoryId) : null,
+      price: body.price,
+      originalPrice: body.originalPrice ?? null,
+      stock: body.stock,
+      images: JSON.stringify(body.images),
+      badge: body.badge ?? null,
+      brand: body.brand ?? null,
+      categoryId: body.categoryId ?? null,
     },
     include: { category: true },
   });

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth";
+import { validateBody } from "@/lib/validate";
+import { productUpdateSchema } from "@/lib/schemas";
 
 async function requireAdmin() {
   const session = await getCurrentAdmin();
@@ -33,35 +35,24 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!Number.isFinite(productId)) {
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
-  const body = await req.json();
 
-  const price = parseFloat(body.price);
-  const originalPrice = body.originalPrice ? parseFloat(body.originalPrice) : null;
-  const stock = parseInt(body.stock);
-  const categoryId = body.categoryId ? parseInt(body.categoryId) : null;
-
-  if (!body.name || typeof body.name !== "string") {
-    return NextResponse.json({ error: "กรุณากรอกชื่อสินค้า" }, { status: 400 });
-  }
-  if (!Number.isFinite(price) || price < 0) {
-    return NextResponse.json({ error: "ราคาไม่ถูกต้อง" }, { status: 400 });
-  }
-  if (originalPrice !== null && (!Number.isFinite(originalPrice) || originalPrice < 0)) {
-    return NextResponse.json({ error: "ราคาเดิมไม่ถูกต้อง" }, { status: 400 });
-  }
+  // ---- Zod ----
+  const parsed = await validateBody(req, productUpdateSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   const product = await prisma.product.update({
     where: { id: productId },
     data: {
       name: body.name,
       description: body.description,
-      price,
-      originalPrice,
-      stock: Number.isFinite(stock) ? stock : 0,
-      images: JSON.stringify(Array.isArray(body.images) ? body.images : []),
-      badge: body.badge || null,
-      brand: body.brand || null,
-      categoryId,
+      price: body.price,
+      originalPrice: body.originalPrice ?? null,
+      stock: body.stock,
+      images: JSON.stringify(body.images ?? []),
+      badge: body.badge ?? null,
+      brand: body.brand ?? null,
+      categoryId: body.categoryId ?? null,
     },
     include: { category: true },
   });
