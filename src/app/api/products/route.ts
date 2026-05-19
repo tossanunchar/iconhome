@@ -10,6 +10,8 @@ export async function GET(req: NextRequest) {
   const category = searchParams.get("category") || "";
   const brand = searchParams.get("brand") || "";
   const badge = searchParams.get("badge") || "";
+  const stockFilter = searchParams.get("stock") || ""; // "in" | "out" | "low" (≤5) | ""
+  const noBadge = searchParams.get("noBadge") === "1"; // = สินค้าที่ยังไม่มี badge
   const minPrice = searchParams.get("minPrice");
   const maxPrice = searchParams.get("maxPrice");
   const page = parseInt(searchParams.get("page") || "1");
@@ -33,16 +35,24 @@ export async function GET(req: NextRequest) {
   if (q) where.name = { contains: q };
   if (brand) where.brand = { contains: brand };
   if (badge) where.badge = badge;
+  if (noBadge) where.badge = null;
   if (category) where.category = { slug: category };
   if (minPrice || maxPrice) {
     where.price = {};
     if (minPrice) where.price.gte = parseFloat(minPrice);
     if (maxPrice) where.price.lte = parseFloat(maxPrice);
   }
+  if (stockFilter === "in") where.stock = { gt: 0 };
+  if (stockFilter === "out") where.stock = { lte: 0 };
+  if (stockFilter === "low") where.stock = { gt: 0, lte: 5 };
 
   let orderBy: any = { createdAt: "desc" };
+  if (sort === "oldest") orderBy = { createdAt: "asc" };
   if (sort === "price_asc") orderBy = { price: "asc" };
   if (sort === "price_desc") orderBy = { price: "desc" };
+  if (sort === "stock_asc") orderBy = { stock: "asc" };
+  if (sort === "stock_desc") orderBy = { stock: "desc" };
+  if (sort === "name_asc") orderBy = { name: "asc" };
   if (sort === "popular") orderBy = { createdAt: "desc" };
 
   const [products, total] = await Promise.all([
