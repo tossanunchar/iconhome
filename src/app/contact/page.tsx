@@ -67,7 +67,7 @@ export default function ContactPage() {
                 <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 24 24">
                   <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                 </svg>
-                สาขาหลัก (สาขาหลัก)
+                สาขาเสลภูมิ
               </h2>
               <div className="space-y-2 text-sm text-gray-600">
                 <p className="flex items-start gap-2">
@@ -80,7 +80,7 @@ export default function ContactPage() {
                   <svg className="w-4 h-4 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
-                  <a href="tel:0963650471" className="hover:text-red-600 transition-colors">096-365-0471</a>
+                  <a href="tel:0803293258" className="hover:text-red-600 transition-colors">080-329-3258</a>
                 </p>
                 <p className="flex items-center gap-2">
                   <svg className="w-4 h-4 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,20 +97,14 @@ export default function ContactPage() {
                 <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 24 24">
                   <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                 </svg>
-                สาขาที่สอง (สาขาย่อย)
+                สาขาเลิงนกทา
               </h2>
               <div className="space-y-2 text-sm text-gray-600">
-                <p className="flex items-start gap-2">
-                  <svg className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  </svg>
-                  เลขที่ 123 หมู่ 8 ตำบลเสลภูมิ อำเภอเสลภูมิ ร้อยเอ็ด 45120
-                </p>
                 <p className="flex items-center gap-2">
                   <svg className="w-4 h-4 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
-                  <a href="tel:0803266271" className="hover:text-red-600 transition-colors">080-326-6271</a>
+                  <a href="tel:0634128250" className="hover:text-red-600 transition-colors">063-412-8250</a>
                 </p>
                 <p className="flex items-center gap-2">
                   <svg className="w-4 h-4 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
